@@ -1,0 +1,622 @@
+
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Painel de Desempenho na Corrida</title>
+    <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #f1f3f8;
+            color: #263449;
+        }
+
+        header {
+            background: #263449;
+            color: white;
+            padding: 28px 20px;
+        }
+
+        header div, main {
+            max-width: 1050px;
+            margin: auto;
+        }
+
+        header h1 {
+            margin: 0 0 10px;
+        }
+
+        header p {
+            margin: 0;
+            color: #d5dceb;
+            line-height: 1.5;
+        }
+
+        main {
+            padding: 24px 18px;
+        }
+
+        section {
+            background: white;
+            padding: 22px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 8px #26344912;
+        }
+
+        h2 {
+            margin-top: 0;
+            font-size: 20px;
+        }
+
+        .subtitulo {
+            color: #667085;
+            line-height: 1.6;
+        }
+
+        .controles {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 10px 25px;
+        }
+
+        label {
+            display: block;
+            margin: 12px 0 8px;
+            font-weight: bold;
+            line-height: 1.5;
+        }
+
+        input {
+            width: 100%;
+            accent-color: #415fff;
+        }
+
+        select, button {
+            padding: 11px;
+            border-radius: 6px;
+            font-size: 15px;
+        }
+
+        select {
+            width: 100%;
+            background: white;
+            border: 1px solid #d5dbe6;
+        }
+
+        button {
+            background: #415fff;
+            color: white;
+            border: none;
+            cursor: pointer;
+            margin-top: 15px;
+        }
+
+        button:hover {
+            background: #3049d8;
+        }
+
+        .cartoes {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 14px;
+        }
+
+        .cartao {
+            background: #f5f6ff;
+            border: 1px solid #e3e7ff;
+            padding: 16px;
+            border-radius: 8px;
+            min-width: 0;
+        }
+
+        .cartao p {
+            color: #596579;
+            font-size: 14px;
+            margin: 0 0 12px;
+        }
+
+        .valor {
+            font-size: 22px;
+            color: #415fff;
+            font-weight: bold;
+        }
+
+        .detalhe {
+            font-size: 13px;
+            color: #667085;
+            margin-top: 8px;
+            line-height: 1.5;
+        }
+
+        .grafico {
+            width: 100%;
+            height: 340px;
+        }
+
+        .formula {
+            background: #f5f6ff;
+            border-left: 4px solid #415fff;
+            padding: 14px;
+            margin: 15px 0;
+            line-height: 1.7;
+            overflow-wrap: anywhere;
+        }
+
+        .resultado {
+            background: #edf7f0;
+            border-radius: 8px;
+            padding: 16px;
+            line-height: 1.7;
+        }
+
+        footer {
+            text-align: center;
+            color: #667085;
+            padding: 10px 20px 25px;
+            font-size: 13px;
+        }
+
+        @media (max-width: 750px) {
+            .cartoes {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+
+            .controles {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 420px) {
+            .cartoes {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <div>
+            <h1>Painel de Desempenho na Corrida</h1>
+            <p>Funções, limites, derivadas e integrais aplicados ao desempenho esportivo.</p>
+        </div>
+    </header>
+
+    <main>
+        <section>
+            <h2>Parâmetros da corrida</h2>
+            <p class="subtitulo">Escolha como a velocidade muda e ajuste as condições da corrida para comparar os resultados.</p>
+
+            <div class="controles">
+                <div>
+                    <label for="cenario">Como a velocidade muda durante a corrida?</label>
+                    <select id="cenario">
+                        <option value="0">Mantenho o mesmo ritmo</option>
+                        <option value="1" selected>Acelero e depois desacelero</option>
+                        <option value="2">Aumento a velocidade progressivamente</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label for="duracao">Duração: <span id="txtDuracao">60</span> minutos</label>
+                    <input type="range" id="duracao" min="15" max="60" step="5" value="60">
+                </div>
+
+                <div>
+                    <label for="v0">Velocidade inicial: <span id="txtV0">6</span> km/h</label>
+                    <input type="range" id="v0" min="4" max="8" step="0.5" value="6">
+                </div>
+
+                <div>
+                    <label for="peso">Peso corporal: <span id="txtPeso">65</span> kg</label>
+                    <input type="range" id="peso" min="40" max="120" step="1" value="65">
+                </div>
+            </div>
+
+            <button id="restaurar">Restaurar valores iniciais</button>
+        </section>
+
+        <section>
+            <h2>Resumo dos resultados</h2>
+            <div class="cartoes">
+                <div class="cartao">
+                    <p>Distância total</p>
+                    <div class="valor" id="total">6,67 km</div>
+                    <div class="detalhe">Calculada pela integral</div>
+                </div>
+
+                <div class="cartao">
+                    <p>Velocidade máxima</p>
+                    <div class="valor" id="maximo">7,00 km/h</div>
+                    <div class="detalhe" id="tempoMax">30 min</div>
+                </div>
+
+                <div class="cartao">
+                    <p>Velocidade mínima</p>
+                    <div class="valor" id="minimo">6,00 km/h</div>
+                    <div class="detalhe" id="tempoMin">0 min e 60 min</div>
+                </div>
+
+                <div class="cartao">
+                    <p>Tendência atual</p>
+                    <div class="valor" id="tendencia">Variável</div>
+                    <div class="detalhe" id="detTendencia">Aumenta e depois diminui</div>
+                </div>
+
+                <div class="cartao">
+                    <p>Calorias gastas</p>
+                    <div class="valor" id="calorias">433 kcal</div>
+                    <div class="detalhe">Estimativa conforme distância e peso</div>
+                </div>
+            </div>
+        </section>
+
+        <section>
+            <h2>1. Função da velocidade</h2>
+            <p class="subtitulo">Observe como a velocidade varia com o tempo. Os pontos destacados representam o máximo e o mínimo no intervalo analisado.</p>
+            <div class="formula" id="formulaV"></div>
+            <div id="graficoV" class="grafico"></div>
+        </section>
+
+        <section>
+            <h2>2. Derivada e tendência</h2>
+            <p class="subtitulo">A derivada indica se a velocidade está aumentando, diminuindo ou permanecendo constante.</p>
+            <div class="formula" id="formulaD"></div>
+            <div id="graficoD" class="grafico"></div>
+            <div class="resultado" id="analiseTendencia"></div>
+        </section>
+
+        <section>
+            <h2>3. Integral e distância total</h2>
+            <p class="subtitulo">A integral definida calcula a distância acumulada, representada pela área sob o gráfico da velocidade.</p>
+
+            <div class="controles">
+                <div>
+                    <label for="inicio">Início do intervalo: <span id="txtInicio">0</span> minutos</label>
+                    <input type="range" id="inicio" min="0" max="55" step="5" value="0">
+                </div>
+
+                <div>
+                    <label for="fim">Final do intervalo: <span id="txtFim">60</span> minutos</label>
+                    <input type="range" id="fim" min="5" max="60" step="5" value="60">
+                </div>
+            </div>
+
+            <div class="formula" id="formulaI"></div>
+            <p>Distância no intervalo selecionado: <span class="valor" id="totalIntervalo">6,67 km</span></p>
+            <div id="graficoI" class="grafico"></div>
+        </section>
+
+        <section>
+            <h2>4. Limite e frequência cardíaca</h2>
+            <p class="subtitulo">Este modelo teórico representa uma frequência cardíaca que se aproxima de um limite matemático ao longo do tempo.</p>
+            <div class="formula">H(t) = 120 + 50(1 − e⁻³ᵗ)</div>
+            <p>Limite matemático quando o tempo tende ao infinito: <strong>170 bpm</strong>.</p>
+            <p>Frequência estimada ao final: <strong id="fcFinal">167,51 bpm</strong></p>
+            <div id="graficoFC" class="grafico"></div>
+        </section>
+
+        <section>
+            <h2>5. Análise para tomada de decisão</h2>
+            <div class="resultado" id="interpretacao"></div>
+        </section>
+    </main>
+
+    <footer>
+        Modelo matemático simplificado para fins acadêmicos. Calorias e frequência cardíaca são estimativas teóricas, não medições reais.
+    </footer>
+
+    <script>
+        const cenario = document.getElementById("cenario");
+        const duracao = document.getElementById("duracao");
+        const v0Input = document.getElementById("v0");
+        const pesoInput = document.getElementById("peso");
+        const inicioInput = document.getElementById("inicio");
+        const fimInput = document.getElementById("fim");
+
+        function formatar(valor) {
+            return valor.toLocaleString("pt-BR", {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            });
+        }
+
+        function atualizar() {
+            const tipo = Number(cenario.value);
+            const v0 = Number(v0Input.value);
+            const peso = Number(pesoInput.value);
+            const minutos = Number(duracao.value);
+            const T = minutos / 60;
+
+            inicioInput.max = minutos - 5;
+            fimInput.max = minutos;
+
+            if (Number(inicioInput.value) > minutos - 5) {
+                inicioInput.value = minutos - 5;
+            }
+
+            if (Number(fimInput.value) > minutos) {
+                fimInput.value = minutos;
+            }
+
+            if (Number(inicioInput.value) >= Number(fimInput.value)) {
+                fimInput.value = Math.min(minutos, Number(inicioInput.value) + 5);
+            }
+
+            const inicioMin = Number(inicioInput.value);
+            const fimMin = Number(fimInput.value);
+            const inicio = inicioMin / 60;
+            const fim = fimMin / 60;
+
+            let v;
+            let dv;
+            let primitiva;
+            let formulaV;
+            let formulaD;
+            let descricao;
+
+            if (tipo === 0) {
+                v = t => v0;
+                dv = t => 0;
+                primitiva = t => v0 * t;
+                formulaV = "v(t) = " + v0;
+                formulaD = "v'(t) = 0";
+                descricao = "A velocidade permanece constante durante toda a corrida.";
+            } else if (tipo === 1) {
+                v = t => v0 + 4 * t - 4 * t * t;
+                dv = t => 4 - 8 * t;
+                primitiva = t => v0 * t + 2 * t * t - 4 * t * t * t / 3;
+                formulaV = "v(t) = " + v0 + " + 4t − 4t²";
+                formulaD = "v'(t) = 4 − 8t";
+                descricao = "A velocidade aumenta inicialmente e depois diminui.";
+            } else {
+                v = t => v0 + 2 * t;
+                dv = t => 2;
+                primitiva = t => v0 * t + t * t;
+                formulaV = "v(t) = " + v0 + " + 2t";
+                formulaD = "v'(t) = 2";
+                descricao = "A velocidade aumenta progressivamente durante a corrida.";
+            }
+
+            const h = t => 120 + 50 * (1 - Math.exp(-3 * t));
+            const tempos = [];
+            const velocidades = [];
+            const derivadas = [];
+            const frequencias = [];
+
+            for (let i = 0; i <= 100; i++) {
+                const t = T * i / 100;
+                tempos.push(t);
+                velocidades.push(v(t));
+                derivadas.push(dv(t));
+                frequencias.push(h(t));
+            }
+
+            let candidatos = [0, T];
+
+            if (tipo === 1 && T > 0.5) {
+                candidatos.push(0.5);
+            }
+
+            const pontos = candidatos.map(t => ({
+                tempo: t,
+                velocidade: v(t)
+            }));
+
+            const maior = Math.max(...pontos.map(p => p.velocidade));
+            const menor = Math.min(...pontos.map(p => p.velocidade));
+
+            const temposMaximos = pontos
+                .filter(p => Math.abs(p.velocidade - maior) < 0.000001)
+                .map(p => p.tempo);
+
+            const temposMinimos = pontos
+                .filter(p => Math.abs(p.velocidade - menor) < 0.000001)
+                .map(p => p.tempo);
+
+            const distancia = primitiva(T);
+            const distanciaIntervalo = primitiva(fim) - primitiva(inicio);
+            const calorias = distancia * peso;
+
+            document.getElementById("txtV0").textContent = v0;
+            document.getElementById("txtDuracao").textContent = minutos;
+            document.getElementById("txtPeso").textContent = peso;
+            document.getElementById("txtInicio").textContent = inicioMin;
+            document.getElementById("txtFim").textContent = fimMin;
+
+            document.getElementById("total").textContent = formatar(distancia) + " km";
+            document.getElementById("maximo").textContent = formatar(maior) + " km/h";
+            document.getElementById("minimo").textContent = formatar(menor) + " km/h";
+            document.getElementById("calorias").textContent = Math.round(calorias) + " kcal";
+
+            document.getElementById("tempoMax").textContent =
+                temposMaximos.map(t => (t * 60).toFixed(0) + " min").join(" e ");
+
+            document.getElementById("tempoMin").textContent =
+                temposMinimos.map(t => (t * 60).toFixed(0) + " min").join(" e ");
+
+            document.getElementById("totalIntervalo").textContent =
+                formatar(distanciaIntervalo) + " km";
+
+            document.getElementById("formulaV").textContent = formulaV;
+            document.getElementById("formulaD").textContent = formulaD;
+            document.getElementById("fcFinal").textContent = formatar(h(T)) + " bpm";
+
+            let tendencia;
+            let detalhe;
+            let analise;
+
+            if (tipo === 0) {
+                tendencia = "Constante";
+                detalhe = "A velocidade não muda";
+                analise = "A derivada é zero. A velocidade permanece constante durante todo o intervalo.";
+            } else if (tipo === 2) {
+                tendencia = "Crescente";
+                detalhe = "A velocidade aumenta";
+                analise = "A derivada é positiva. A velocidade aumenta durante todo o intervalo.";
+            } else if (T <= 0.5) {
+                tendencia = "Crescente";
+                detalhe = "Aumenta no intervalo";
+                analise = "A velocidade aumenta durante o intervalo analisado e atinge o máximo aos 30 minutos ou no final do intervalo.";
+            } else {
+                tendencia = "Variável";
+                detalhe = "Aumenta e depois diminui";
+                analise = "A derivada é positiva antes dos 30 minutos e negativa depois. A velocidade máxima ocorre aos 30 minutos, quando a derivada é zero.";
+            }
+
+            document.getElementById("tendencia").textContent = tendencia;
+            document.getElementById("detTendencia").textContent = detalhe;
+            document.getElementById("analiseTendencia").textContent = analise;
+
+            const layout = {
+                margin: {t: 20, r: 20, b: 50, l: 60},
+                xaxis: {title: "Tempo (horas)", range: [0, T]},
+                paper_bgcolor: "white",
+                plot_bgcolor: "white",
+                font: {family: "Arial", color: "#263449"},
+                legend: {orientation: "h", y: -0.25}
+            };
+
+            const opcoes = {responsive: true};
+
+            Plotly.react("graficoV", [
+                {
+                    x: tempos,
+                    y: velocidades,
+                    type: "scatter",
+                    mode: "lines",
+                    name: "Velocidade",
+                    line: {color: "#415fff", width: 3}
+                },
+                {
+                    x: temposMaximos,
+                    y: temposMaximos.map(() => maior),
+                    type: "scatter",
+                    mode: "markers",
+                    name: "Máximo",
+                    marker: {color: "#159947", size: 11}
+                },
+                {
+                    x: temposMinimos,
+                    y: temposMinimos.map(() => menor),
+                    type: "scatter",
+                    mode: "markers",
+                    name: "Mínimo",
+                    marker: {color: "#d94b4b", size: 11}
+                }
+            ], {
+                ...layout,
+                yaxis: {title: "Velocidade (km/h)", rangemode: "tozero"}
+            }, opcoes);
+
+            Plotly.react("graficoD", [
+                {
+                    x: tempos,
+                    y: derivadas,
+                    type: "scatter",
+                    mode: "lines",
+                    name: "Derivada",
+                    line: {color: "#8b5cf6", width: 3}
+                },
+                {
+                    x: [0, T],
+                    y: [0, 0],
+                    type: "scatter",
+                    mode: "lines",
+                    name: "Derivada zero",
+                    line: {color: "#777", dash: "dash"}
+                }
+            ], {
+                ...layout,
+                yaxis: {title: "Taxa de variação"}
+            }, opcoes);
+
+            const pontosI = [];
+            const valoresI = [];
+
+            for (let i = 0; i <= 100; i++) {
+                const t = inicio + (fim - inicio) * i / 100;
+                pontosI.push(t);
+                valoresI.push(v(t));
+            }
+
+            Plotly.react("graficoI", [{
+                x: pontosI,
+                y: valoresI,
+                type: "scatter",
+                mode: "lines",
+                fill: "tozeroy",
+                name: "Área da integral",
+                line: {color: "#159947", width: 3},
+                fillcolor: "rgba(21,153,71,0.18)"
+            }], {
+                ...layout,
+                xaxis: {title: "Tempo (horas)", range: [inicio, fim]},
+                yaxis: {title: "Velocidade (km/h)", rangemode: "tozero"}
+            }, opcoes);
+
+            Plotly.react("graficoFC", [
+                {
+                    x: tempos,
+                    y: frequencias,
+                    type: "scatter",
+                    mode: "lines",
+                    name: "Frequência cardíaca",
+                    line: {color: "#e66b55", width: 3}
+                },
+                {
+                    x: [0, T],
+                    y: [170, 170],
+                    type: "scatter",
+                    mode: "lines",
+                    name: "Limite teórico",
+                    line: {color: "#777", dash: "dash"}
+                }
+            ], {
+                ...layout,
+                yaxis: {title: "Frequência (bpm)", range: [115, 175]}
+            }, opcoes);
+
+            document.getElementById("formulaI").textContent =
+                "Integral de " + inicioMin + " a " + fimMin +
+                " minutos = " + formatar(distanciaIntervalo) + " km";
+
+            document.getElementById("interpretacao").textContent =
+                descricao + " A distância total estimada é " + formatar(distancia) +
+                " km. A velocidade máxima é " + formatar(maior) +
+                " km/h e a mínima é " + formatar(menor) +
+                " km/h. " + analise + " A integral no intervalo escolhido resulta em " +
+                formatar(distanciaIntervalo) +
+                " km. O gasto energético estimado é de aproximadamente " +
+                Math.round(calorias) +
+                " kcal. Compare os cenários para analisar como diferentes ritmos alteram os resultados matemáticos.";
+        }
+
+        [cenario, duracao, v0Input, pesoInput, inicioInput, fimInput].forEach(elemento => {
+            elemento.addEventListener("input", atualizar);
+            elemento.addEventListener("change", atualizar);
+        });
+
+        document.getElementById("restaurar").addEventListener("click", function() {
+            cenario.value = "1";
+            duracao.value = 60;
+            v0Input.value = 6;
+            pesoInput.value = 65;
+            inicioInput.value = 0;
+            fimInput.value = 60;
+            atualizar();
+        });
+
+        atualizar();
+    </script>
+</body>
+</html>
